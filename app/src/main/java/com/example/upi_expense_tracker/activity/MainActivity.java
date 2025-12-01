@@ -1,4 +1,4 @@
-package com.example.upi_expense_tracker;
+package com.example.upi_expense_tracker.activity;
 
 import android.os.Bundle;
 
@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.upi_expense_tracker.R;
 
 public class MainActivity extends AppCompatActivity {
 
