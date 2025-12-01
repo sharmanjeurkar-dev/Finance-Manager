@@ -36,8 +36,8 @@ public class NotificationService extends NotificationListenerService {
         String GPAY_PACKAGE = "com.google.android.apps.nbu.paisa.user";
         //Whatsapp Package only for testing
         String WHATSAPP_PACKAGE = "com.whatsapp";
-
-        if(sbn.getPackageName()!=GPAY_PACKAGE && sbn.getPackageName() != WHATSAPP_PACKAGE){
+        String packageName = sbn.getPackageName();
+        if(!packageName.equals(GPAY_PACKAGE) && !packageName.equals(WHATSAPP_PACKAGE)){
             return;
         }
 
