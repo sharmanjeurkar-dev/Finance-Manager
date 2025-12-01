@@ -4,8 +4,13 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
+import com.example.upi_expense_tracker.data.AppDatabase;
+import com.example.upi_expense_tracker.data.Transaction;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+
 
 /**
  *
@@ -64,11 +69,29 @@ public class NotificationService extends NotificationListenerService {
                     try{
                         double amount = Double.parseDouble(finalAmount);//Converts to double
                         Log.d(TAG,"Transaction found of amount: " + amount);
+                        saveToDatabase(amount);
                     } catch (NumberFormatException e) {
                         Log.d(TAG, "Amount found not in right format");
                     }
                 }
         }
+
+    }
+
+    public void saveToDatabase(double amount){
+        Transaction transaction = new Transaction(
+                amount,
+                "Unknown",
+                System.currentTimeMillis(),
+                true
+        );
+        AppDatabase.databaseWriteExecutor.execute(()->{
+            AppDatabase.getDatabase(getApplicationContext())
+                    .transactionDAO()
+                    .insertTransaction(transaction);
+            Log.d(TAG, "Transaction saved to Database");
+        });
+
 
     }
     @Override
