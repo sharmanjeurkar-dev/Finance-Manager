@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
 public class NotificationService extends NotificationListenerService {
 
     private  static final String TAG = "UPI DEBUG";
-
+    private String lastProcessedText = "";
+    private long lastProcessedTime = 0;
     public void onListenerConnected(){
         super.onListenerConnected();
         Log.d(TAG,"Service started! Listener Activated");
@@ -54,6 +55,13 @@ public class NotificationService extends NotificationListenerService {
         if(text.isEmpty())
             return;
 
+        long currentTime = System.currentTimeMillis();
+
+        if (text.equals(lastProcessedText) && (currentTime - lastProcessedTime) < 2000) {
+            Log.d(TAG, "Duplicate notification ignored: " + text);
+            return;
+        }
+
         Log.d(TAG, "Analyzing msg from: "+sbn.getPackageName());
         Log.d(TAG, "Content: "+text);
 
@@ -69,6 +77,8 @@ public class NotificationService extends NotificationListenerService {
                     try{
                         double amount = Double.parseDouble(finalAmount);//Converts to double
                         Log.d(TAG,"Transaction found of amount: " + amount);
+                        lastProcessedText = text;
+                        lastProcessedTime = currentTime;
                         saveToDatabase(amount);
                     } catch (NumberFormatException e) {
                         Log.d(TAG, "Amount found not in right format");
