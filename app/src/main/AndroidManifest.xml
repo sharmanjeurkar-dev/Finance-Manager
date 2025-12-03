@@ -30,7 +30,7 @@
             </intent-filter>
         </service>
 
-        <service android:name=".services.AccessibilityService"
+        <service android:name=".services.ScreenReader"
             android:label="UPI Screen Reader"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
