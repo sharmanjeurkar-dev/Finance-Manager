@@ -6,44 +6,41 @@ import android.util.Log;
 
 import com.example.upi_expense_tracker.data.AppDatabase;
 import com.example.upi_expense_tracker.data.Transaction;
+import com.example.upi_expense_tracker.data.TransactionDAO;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-
-/**
- *
- * Service: Which reads the notifications in the status bar and infer it's text
- *
- **/
 public class NotificationService extends NotificationListenerService {
 
     private  static final String TAG = "UPI DEBUG";
     private String lastProcessedText = "";
     private long lastProcessedTime = 0;
+
+    @Override
     public void onListenerConnected(){
         super.onListenerConnected();
         Log.d(TAG,"Service started! Listener Activated");
     }
 
+    @Override
     public void onListenerDisconnected(){
-        super.onListenerConnected();
+        super.onListenerDisconnected();
         Log.d(TAG,"Service ended Listener Deactivated");
     }
 
-
     @Override
     public void onNotificationPosted(StatusBarNotification sbn){
-
-        //Only filtering useful packages for the service
-
-        //GPAY package
         String GPAY_PACKAGE = "com.google.android.apps.nbu.paisa.user";
-        //Whatsapp Package only for testing
-        String WHATSAPP_PACKAGE = "com.whatsapp";
+        String PHONEPE_PACKAGE = "com.phonepe.app";
+        String PAYTM_PACKAGE = "net.one97.paytm";
+        String WHATSAPP_PACKAGE = "com.whatsapp"; // For testing
+
         String packageName = sbn.getPackageName();
-        if(!packageName.equals(GPAY_PACKAGE) && !packageName.equals(WHATSAPP_PACKAGE)){
+        if(!GPAY_PACKAGE.equals(packageName) && !PHONEPE_PACKAGE.equals(packageName) && !PAYTM_PACKAGE.equals(packageName) && !WHATSAPP_PACKAGE.equals(packageName)){
             return;
         }
 
@@ -52,8 +49,7 @@ public class NotificationService extends NotificationListenerService {
             text = sbn.getNotification().extras.getCharSequence("android.text").toString();
         }
 
-        if(text.isEmpty())
-            return;
+        if(text.isEmpty()) return;
 
         long currentTime = System.currentTimeMillis();
 
@@ -62,48 +58,76 @@ public class NotificationService extends NotificationListenerService {
             return;
         }
 
-        Log.d(TAG, "Analyzing msg from: "+sbn.getPackageName());
-        Log.d(TAG, "Content: "+text);
+        final String AMOUNT_PATTERN = "(?i)(?:rs\\.?|inr|₹)\\s*([\\d,]+\\.?\\d*)";
+        Pattern amountPattern = Pattern.compile(AMOUNT_PATTERN);
+        Matcher amountMatcher = amountPattern.matcher(text);
 
-        final String PATTERN = "(?i)(?:rs\\.?|INR|₹)\\s*([\\d,]+\\.?\\d*)";//Regex format
-
-        Pattern p = Pattern.compile(PATTERN);//Regex format given for the compiler to understand and decode
-        Matcher m = p.matcher(text);// Given the text from msg to compare with the pattern and parse through regex format
-
-        if(m.find()){
-            String rawAmount = m.group(1); //Finds for the number after parsing the msg if in regex format
-                if (rawAmount!=null){
-                    String finalAmount = rawAmount.replace(",","");// Removes Comas
-                    try{
-                        double amount = Double.parseDouble(finalAmount);//Converts to double
-                        Log.d(TAG,"Transaction found of amount: " + amount);
-                        lastProcessedText = text;
-                        lastProcessedTime = currentTime;
-                        saveToDatabase(amount);
-                    } catch (NumberFormatException e) {
-                        Log.d(TAG, "Amount found not in right format");
+        if(amountMatcher.find()){
+            String rawAmount = amountMatcher.group(1);
+            if (rawAmount!=null){
+                String finalAmount = rawAmount.replace(",", "");
+                try{
+                    double amount = Double.parseDouble(finalAmount);
+                    
+                    boolean isDebit;
+                    String lowerCaseText = text.toLowerCase();
+                    if (lowerCaseText.contains("credited") || lowerCaseText.contains("received") || lowerCaseText.contains("deposited")) {
+                        isDebit = false;
+                    } else {
+                        isDebit = true; // Default to debit
                     }
+
+                    String merchantName = "Unknown";
+                    final String MERCHANT_PATTERN = "(?i)(?:to|from|sent to|paid to|paying)\\s+([A-Za-z0-9\\s\\.\\-&'@]+?)(?:\\s+on|\\s+at|\\s*\\.|\\s*|$)";
+                    Pattern merchantPattern = Pattern.compile(MERCHANT_PATTERN);
+                    Matcher merchantMatcher = merchantPattern.matcher(text);
+
+                    if (merchantMatcher.find()) {
+                        merchantName = merchantMatcher.group(1).trim();
+                        if(merchantName.contains("@")){
+                           merchantName = merchantName.split("@")[0];
+                        }
+                    }
+
+                    lastProcessedText = text;
+                    lastProcessedTime = currentTime;
+                    saveToDatabase(amount, merchantName, isDebit);
+                } catch (NumberFormatException e) {
+                    Log.d(TAG, "Amount found not in right format");
                 }
+            }
+        }
+    }
+
+    public void saveToDatabase(double amount, String merchantName, boolean isDebit){
+        TransactionDAO dao = AppDatabase.getDatabase(getApplicationContext()).transactionDAO();
+        long timeCheck = System.currentTimeMillis() - 60000; // 1 minute window
+
+        Transaction existing = dao.checkDuplicate(amount, timeCheck);
+        
+        if (existing!=null){
+            Log.d(TAG, "saveToDatabase: Transaction already existing duplicate transaction avoided");
+            return;
         }
 
-    }
+        long currentTime = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, h:mm a", Locale.getDefault());
+        String formattedTime = sdf.format(new Date(currentTime));
 
-    public void saveToDatabase(double amount){
         Transaction transaction = new Transaction(
                 amount,
-                "Unknown",
-                System.currentTimeMillis(),
-                true
+                merchantName,
+                formattedTime,
+                currentTime,
+                isDebit
         );
+
         AppDatabase.databaseWriteExecutor.execute(()->{
-            AppDatabase.getDatabase(getApplicationContext())
-                    .transactionDAO()
-                    .insertTransaction(transaction);
-            Log.d(TAG, "Transaction saved to Database");
+            dao.insertTransaction(transaction);
+            Log.d(TAG, "Transaction saved to Database. Amount: " + amount + ", Merchant: " + merchantName + ", Debit: " + isDebit);
         });
-
-
     }
+
     @Override
     public void  onNotificationRemoved(StatusBarNotification sbn){
         //Code

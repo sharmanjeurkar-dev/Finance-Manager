@@ -1,30 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="#212121"
+    tools:context=".activity.MainActivity">
 
-    <!-- Title -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Recent Expenses"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:text="LATEST PAYMENT"
+        android:textColor="#FFC107"
+        android:textSize="16sp"
+        android:layout_margin="16dp"/>
 
-    <!-- The Scrollable List -->
-    <ScrollView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="#303030"
+        app:cardCornerRadius="12dp">
 
-        <TextView
-            android:id="@+id/tv_transactions"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
-            android:textSize="16sp"/>
-    </ScrollView>
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/latest_merchant"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="STARBUCKS"
+                android:textColor="#FFC107"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/latest_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Today, 10:30 AM"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/latest_merchant" />
+
+            <TextView
+                android:id="@+id/latest_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Rs 15.50"
+                android:textColor="#FFC107"
+                android:textSize="48sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/latest_time"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginTop="8dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/total_spent_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TOTAL SPENT"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:id="@+id/total_spent_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Rs 542.89"
+        android:textColor="#D32F2F"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PREVIOUS PAYMENTS"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:layout_margin="16dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_previous_payments"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:listitem="@layout/list_item_transaction" />
 
 </LinearLayout>

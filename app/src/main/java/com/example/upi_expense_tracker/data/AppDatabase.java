@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Transaction.class},version = 1,exportSchema = false)
+@Database(entities = {Transaction.class},version = 3,exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public static volatile AppDatabase INSTANCE;
@@ -34,7 +34,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                 ,AppDatabase.class
                                     // DB name
                                 ,"FINANCE_MANAGER_DB"
-                            ).build();// builds the db
+                            ).fallbackToDestructiveMigration().build();// builds the db
                 }
             }
         return INSTANCE; // returns the db

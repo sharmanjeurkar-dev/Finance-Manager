@@ -14,11 +14,14 @@ public interface TransactionDAO {
     void insertTransaction(Transaction transaction);
 
     //Selecting all the data and making it visible
-    @Query("Select * from transactions order by id ASC")
+    @Query("Select * from transactions order by timeStamp DESC")
     List <Transaction> getAllTransactions();
 
     //Calculate the total spent
     @Query("Select SUM(amount) from transactions where isDebit=1 ")
     double getTotalSpent();
+
+    @Query("SELECT * FROM transactions WHERE amount = :amount AND timeStamp > :timeLimit LIMIT 1")
+    Transaction checkDuplicate(double amount, long timeLimit);
 
 }
